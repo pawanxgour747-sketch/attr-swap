@@ -3,10 +3,10 @@ package com.example.attrswap.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -18,14 +18,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import org.lwjgl.glfw.GLFW;
 
-/**
- * Attribute Swap: bind hotbar slot A and slot B. When enabled and you attack
- * while holding slot A, the client selects slot B for that attack, then
- * returns to slot A at the end of the tick.
- *
- * NOTE: rebuilt from the compiled 1.0.3 jar. Written against Mojang names for 26.x;
- * a few method names may need small tweaks when you first compile.
- */
 public class AttrSwapClient implements ClientModInitializer {
     private int slotA = -1;
     private int slotB = -1;
@@ -49,27 +41,27 @@ public class AttrSwapClient implements ClientModInitializer {
         ClientTickEvents.START_CLIENT_TICK.register(this::onStartTick);
         ClientTickEvents.END_CLIENT_TICK.register(this::onEndTick);
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, ctx) -> {
-            dispatcher.register(ClientCommandManager.literal("attrswap")
-                .then(ClientCommandManager.literal("bind1")
-                    .then(ClientCommandManager.argument("slot", IntegerArgumentType.integer(1, 9))
+            dispatcher.register(ClientCommands.literal("attrswap")
+                .then(ClientCommands.literal("bind1")
+                    .then(ClientCommands.argument("slot", IntegerArgumentType.integer(1, 9))
                         .executes(c -> { slotA = IntegerArgumentType.getInteger(c, "slot") - 1;
                             msg(Minecraft.getInstance(), "§a[A] bound to slot " + (slotA + 1)); return 1; })))
-                .then(ClientCommandManager.literal("bind2")
-                    .then(ClientCommandManager.argument("slot", IntegerArgumentType.integer(1, 9))
+                .then(ClientCommands.literal("bind2")
+                    .then(ClientCommands.argument("slot", IntegerArgumentType.integer(1, 9))
                         .executes(c -> { slotB = IntegerArgumentType.getInteger(c, "slot") - 1;
                             msg(Minecraft.getInstance(), "§a[B] bound to slot " + (slotB + 1)); return 1; })))
-                .then(ClientCommandManager.literal("toggle")
+                .then(ClientCommands.literal("toggle")
                     .executes(c -> { toggle(Minecraft.getInstance()); return 1; }))
-                .then(ClientCommandManager.literal("info")
+                .then(ClientCommands.literal("info")
                     .executes(c -> { printInfo(Minecraft.getInstance()); return 1; }))
-                .then(ClientCommandManager.literal("clear")
+                .then(ClientCommands.literal("clear")
                     .executes(c -> { slotA = slotB = -1; enabled = false;
                         msg(Minecraft.getInstance(), "§7Bindings cleared."); return 1; })));
         });
     }
 
     private KeyMapping reg(String name, int key) {
-        return KeyBindingHelper.registerKeyBinding(
+        return KeyMappingHelper.registerKeyMapping(
             new KeyMapping(name, InputConstants.Type.KEYSYM, key, KeyMapping.Category.MISC));
     }
 
@@ -102,7 +94,7 @@ public class AttrSwapClient implements ClientModInitializer {
             swappedForAttack = false;
         }
         if (enabled) {
-            mc.player.displayClientMessage(Component.literal(hud(mc)), true);
+            mc.gui.setOverlayMessage(Component.literal(hud(mc)), false);
         }
     }
 
@@ -146,6 +138,6 @@ public class AttrSwapClient implements ClientModInitializer {
     }
 
     private void msg(Minecraft mc, String text) {
-        if (mc.player != null) mc.player.displayClientMessage(Component.literal(text), false);
+        if (mc.player != null) mc.player.sendSystemMessage(Component.literal(text));
     }
 }
