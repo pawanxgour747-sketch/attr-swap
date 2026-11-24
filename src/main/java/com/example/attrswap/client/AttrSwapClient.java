@@ -94,7 +94,7 @@ public class AttrSwapClient implements ClientModInitializer {
             swappedForAttack = false;
         }
         if (enabled) {
-            mc.gui.setOverlayMessage(Component.literal(hud(mc)), false);
+            mc.gui.hud.setOverlayMessage(Component.literal(hud(mc)), false);
         }
     }
 
